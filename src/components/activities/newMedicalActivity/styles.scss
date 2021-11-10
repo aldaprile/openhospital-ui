@@ -31,12 +31,12 @@
     font-size: xx-large;
     color: $c-black;
     font-weight: bolder;
-    margin: 45px 0px 70px 0px;
+    margin: 45px 0px 45px 0px;
     @include susy-media($tablet_port) {
       font-size: x-large;
     }
     @include susy-media($smartphone) {
-      margin: 45px 0px 80px 0px;
+      margin: 30px 0px 30px 0px;
       font-size: x-large;
     }
   }
