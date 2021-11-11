@@ -100,32 +100,22 @@
       }
 
       .selectField {
-        width: 40%;
+        width: 30%;
         .MuiFormLabel-root.Mui-error {
           color: #757575;
-        }
-        .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-          border: none !important;
         }
         .MuiSelect-select.MuiInputBase-input {
           border-right: solid 1px lightgrey;
           border-radius: 0;
         }
       }
-      // FIX
-      .MuiListItem-root.Mui-selected,
-      .MuiListItem-root.Mui-selected:hover {
-        background-color: none !important;
-        // color: red;
-      }
 
       .search__button {
-        align-self: center;
         .smallButton {
           background-color: #fff !important;
           color: red !important;
           height: 60px;
-          width: 70px;
+          width: 90px;
         }
       }
     }

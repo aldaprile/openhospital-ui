@@ -339,7 +339,7 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
                       />
                       <div className="search__button">
                         <SmallButton type="submit">
-                          <SearchIcon />
+                          <SearchIcon fontSize="large" />
                         </SmallButton>
                       </div>
                     </div>
