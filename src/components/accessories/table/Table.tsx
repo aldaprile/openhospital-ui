@@ -39,7 +39,7 @@ const Table: FunctionComponent<IProps> = ({
   const [order, setOrder] = React.useState<TOrder>("desc");
   const [orderBy, setOrderBy] = React.useState("date"); //keyof -> DTO
   const [page, setPage] = React.useState(0);
-  const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
+  const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(true);
   const [currentRow, setCurrentRow] = useState({} as any);
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -164,7 +164,7 @@ const Table: FunctionComponent<IProps> = ({
           rowsPerPage={rowsPerPage}
           rowsPerPageOptions={[rowsPerPage]}
           page={page}
-          onPageChange={handleChangePage}
+          onChangePage={handleChangePage}
         />
       ) : (
         ""

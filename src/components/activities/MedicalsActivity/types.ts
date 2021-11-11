@@ -12,6 +12,7 @@ export interface IStateProps {
   medicalSearchResults: Array<MedicalDTO> | undefined;
   medicalTypeResults: Array<MedicalTypeDTO> | undefined;
   searchStatus: TAPIResponseStatus;
+  deleteStatus:TAPIResponseStatus;
   medicalTypeStatus: TAPIResponseStatus;
   medicalTypesOptions: { value: string; label: string }[];
 }
@@ -19,6 +20,7 @@ export interface IStateProps {
 export interface IDispatchProps {
   getMedicals: (sortBy?: GetMedicalsUsingGETSortByEnum) => void;
   getMedicalTypes: (operation: OperationOpts) => void;
+  deleteMedical: (code: number) => void;
 }
 
 export type TProps = IStateProps & IDispatchProps;

@@ -102,7 +102,7 @@ export const updateMedical =
   };
 
   export const deleteMedical =
-  (code: number, updateMedical: MedicalDTO) =>
+  (code: number) =>
   (dispatch: Dispatch<IAction<null, {}>>): void => {
     dispatch({
       type: DELETE_MEDICAL_LOADING,

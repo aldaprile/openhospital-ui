@@ -1,4 +1,5 @@
 import Button from "@material-ui/core/Button";
+import {IconButton} from "@material-ui/core";
 import SplitButton from "../../accessories/splitButton/SplitButton";
 import { useFormik } from "formik";
 import { useHistory } from "react-router";
@@ -13,13 +14,13 @@ import "ag-grid-community/dist/styles/ag-grid.css";
 import "ag-grid-community/dist/ag-grid-community";
 import SearchIcon from "../../../assets/SearchIcon";
 import { scrollToElement } from "../../../libraries/uiUtils/scrollToElement";
-import { getMedicals } from "../../../state/medicals/actions";
+import { deleteMedical, getMedicals } from "../../../state/medicals/actions";
 import { getMedicalTypes } from "../../../state/medicaltypes/actions";
 import { IState } from "../../../types";
 import AppHeader from "../../accessories/appHeader/AppHeader";
 import Footer from "../../accessories/footer/Footer";
 import InfoBox from "../../accessories/infoBox/InfoBox";
-import IconButton from "../../accessories/iconButton/IconButton";
+//import IconButton from "../../accessories/iconButton/IconButton";
 import TextField from "../../accessories/textField/TextField";
 import SelectField from "../../accessories/selectField/SelectField";
 import "./styles.scss";
@@ -37,6 +38,10 @@ import iconEdit from "@material-ui/icons/EditOutlined";
 import { GetMedicalsUsingGETSortByEnum } from "../../../generated";
 import { medicalTypesFormatter } from "../../../libraries/formatUtils/optionFormatting";
 import SmallButton from "../../accessories/smallButton/SmallButton";
+import ConfirmationDialog from "../../accessories/confirmationDialog/ConfirmationDialog";
+import warningIcon from "../../../assets/warning-icon.png";
+import { Delete, Edit, FormatColorResetOutlined, PanoramaSharp } from "@material-ui/icons";
+import { info } from "console";
 
 const MedicalsActivity: FunctionComponent<TProps> = ({
   userCredentials,
@@ -51,6 +56,10 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
   const { t } = useTranslation();
 
   const history = useHistory();
+
+  const redirect = (path:string) => {
+    history.push(path)
+  }
 
   const breadcrumbMap = {
     [t("nav.dashboard")]: "/",
@@ -130,6 +139,7 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
   const [gridApi, setGridApi] = useState(null);
   const [gridColumnApi, setGridColumnApi] = useState<any>(null);
   const [options, setOptions] = useState(medicalTypesOptions);
+  const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
 
   const onGridReady = (params: any) => {
     setGridApi(params.api);
@@ -143,6 +153,15 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
       allColumnIds.push(column.colId);
     });
     gridColumnApi?.autoSizeColumns(allColumnIds, skipHeader);
+  };
+
+  const handleDelete = (code: number) => {
+    if (onDelete) {onDelete(code)};
+    setOpenDeleteConfirmation(false);
+  };
+
+  const onDelete = (code: number) => {
+    deleteMedical(code);
   };
 
   const renderMedicalTypesResults = (): void => {
@@ -177,16 +196,27 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
               pagination={true}
               paginationAutoPageSize={true}
               frameworkComponents={{
-                iconEditRenderer: (params: any) =>
-                  IconButton({
-                    url: "/editMedical/" + params.data.code,
-                    svgImage: iconEdit,
-                  }),
-                iconDeleteRenderer: (params: any) =>
-                  IconButton({
-                    url: "deleteMedical/" + params.data.code,
-                    svgImage: iconDelete,
-                  }),
+                iconEditRenderer: (params: any) => (
+                  <IconButton
+                  onClick={()=>redirect("/editMedical/" + params.data.code)}
+                >
+                  <Edit />
+                </IconButton>
+                ),
+                  // IconButton({
+                  //   url: "/editMedical/" + params.data.code,
+                  //   svgImage: iconEdit,
+                  // }),
+                
+                iconDeleteRenderer: () =>(
+                  // IconButton({
+                  //   url: "deleteMedical/" + params.data.code,
+                  //   svgImage: iconDelete,
+                  // }),
+                <IconButton onClick={()=> setOpenDeleteConfirmation(true)}>
+                  <Delete color="secondary" />
+                </IconButton>
+                )
               }}
             >
               <AgGridColumn
@@ -269,6 +299,7 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     case "TO_NEW_MEDICAL":
       if (!history.location.pathname.includes("newMedical"))
         history.push("/newMedical/");
+    // eslint-disable-next-line no-fallthrough
     default:
       return (
         <div className="medicals">
@@ -351,6 +382,18 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
               </form>
             </div>
           </div>
+          <ConfirmationDialog
+            isOpen={openDeleteConfirmation}
+            title={t("common.delete")}
+            info={t("common.deleteconfirmation", {
+              code: "",
+            })}
+            icon={warningIcon}
+            primaryButtonLabel="OK"
+            secondaryButtonLabel="Dismiss"
+            handlePrimaryButtonClick={() => handleDelete}
+            handleSecondaryButtonClick={() => setOpenDeleteConfirmation(false)}
+          />
           <Footer />
         </div>
       );
@@ -364,11 +407,13 @@ const mapStateToProps = (state: IState): IStateProps => ({
   medicalTypeStatus: state.medicaltypes.getMedicalType.status || "IDLE",
   medicalTypeResults: state.medicaltypes.getMedicalType.data,
   medicalTypesOptions: [],
+  deleteStatus: state.medicals.deleteMedical.status || "IDLE",
 });
 
 const mapDispatchToProps: IDispatchProps = {
   getMedicals,
   getMedicalTypes,
+  deleteMedical,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(MedicalsActivity);
