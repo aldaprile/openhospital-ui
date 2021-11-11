@@ -35,13 +35,15 @@ import { useIsSearchByCode } from "./useIsSearchByCode";
 import isEmpty from "lodash.isempty";
 import iconDelete from "@material-ui/icons/DeleteOutlined";
 import iconEdit from "@material-ui/icons/EditOutlined";
-import { GetMedicalsUsingGETSortByEnum } from "../../../generated";
+import { GetMedicalsUsingGETSortByEnum, MedicalDTO } from "../../../generated";
 import { medicalTypesFormatter } from "../../../libraries/formatUtils/optionFormatting";
 import SmallButton from "../../accessories/smallButton/SmallButton";
 import ConfirmationDialog from "../../accessories/confirmationDialog/ConfirmationDialog";
 import warningIcon from "../../../assets/warning-icon.png";
 import { Delete, Edit, FormatColorResetOutlined, PanoramaSharp } from "@material-ui/icons";
 import { info } from "console";
+import { CSVLink } from "react-csv";
+import { CsvDownloadDTO } from "../../../generated/models/CsvDownloadDTO";
 
 const MedicalsActivity: FunctionComponent<TProps> = ({
   userCredentials,
@@ -148,7 +150,6 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
 
   const autoSizeAll = (skipHeader: boolean) => {
     var allColumnIds: any = [];
-    console.log("gridColumnApi: ", gridColumnApi);
     gridColumnApi?.getAllColumns().forEach(function (column: any) {
       allColumnIds.push(column.colId);
     });
@@ -224,43 +225,14 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
                 field="type.description"
               ></AgGridColumn>
               <AgGridColumn headerName="Code" field="prod_code"></AgGridColumn>
-              <AgGridColumn
-                headerName="Description"
-                field="description"
-                sortable={true}
-                filter={true}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName="PcsXPck"
-                field="pcsperpck"
-                maxWidth={100}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName="Stock"
-                field="{{inqty - outqty}}"
-                maxWidth={100}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName="Crit. Level"
-                field="{{(inqty - outqty) <= minqty}}"
-                maxWidth={100}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName="Out of Stock"
-                field="{{(inqty - outqty) == 0}}"
-                checkboxSelection={true}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName=""
-                cellRenderer="iconEditRenderer"
-                maxWidth={100}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName=""
-                cellRenderer="iconDeleteRenderer"
-                maxWidth={100}
-              ></AgGridColumn>
-            </AgGridReact>
+              <AgGridColumn headerName="Description" field="description" sortable={true} filter={true}></AgGridColumn>
+              <AgGridColumn headerName="PcsXPck" field="pcsperpck" maxWidth={100}></AgGridColumn>
+              <AgGridColumn headerName="Stock" field="{{inqty - outqty}}" maxWidth={100}></AgGridColumn>
+              <AgGridColumn headerName="Crit. Level" field="{{(inqty - outqty) <= minqty}}" maxWidth={100}></AgGridColumn>
+              <AgGridColumn headerName="Out of Stock" field="{{(inqty - outqty) == 0}}"  checkboxSelection={true}></AgGridColumn>
+              <AgGridColumn headerName="" cellRenderer="iconEditRenderer" maxWidth={100}></AgGridColumn>
+              <AgGridColumn headerName="" cellRenderer="iconDeleteRenderer" maxWidth={100}></AgGridColumn>
+            </AgGridReact> 
           </div>
         );
 
@@ -275,6 +247,28 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
   const [activityTransitionState, setActivityTransitionState] =
     useState<TActivityTransitionState>("IDLE");
 
+  //method to prepare .csv export
+  const csvDownload = (props: MedicalDTO[] | undefined): any => {
+    if (props) {
+      let obj: CsvDownloadDTO = {};
+      let dataDownload: CsvDownloadDTO[] = [];
+      props.forEach((e: MedicalDTO) => {
+        obj = {
+          "ID": e.code ? e.code : 0,
+          "Type": e.type?.description,
+          "Code": e.prod_code ? e.prod_code : "",
+          "Description": e.description ? e.description : "",
+          "PcsXPck": e.pcsperpck ? e.pcsperpck : 0,
+          "Stock": e.inqty && e.outqty ? (e.inqty - e.outqty) : 0,
+          "Crit_Level": e.inqty && e.outqty && e.minqty ?  ((e.inqty - e.outqty) <= e.minqty) ? "Yes" : "No" : "",
+          "Out_Of_Stock": e.inqty && e.outqty ? (e.inqty - e.outqty) === 0 ? "Yes" : "No" : ""
+        }
+        dataDownload.push(obj);
+      })
+      return dataDownload
+    }
+  };
+  
   const useDescription = (
     event: React.MouseEvent<Element, MouseEvent>,
     index: number
@@ -326,15 +320,20 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
                       {t("common.report")}
                     </div>
                   </SplitButton>
-                  <Button
-                    className="medicals__button"
-                    type="submit"
-                    disabled={searchStatus === "LOADING"}
+                  <CSVLink
+                    className="medicals__export__button"
+                    filename={"Pharmaceuticals_list.csv"}
+                    data={csvDownload(medicalSearchResults)}
                   >
-                    <div className="medicals__button__label">
-                      {t("common.export")}
-                    </div>
-                  </Button>
+                    <Button
+                      className="medicals__button"
+                      disabled={searchStatus === "LOADING"}
+                    >
+                      <div className="medicals__button__label">
+                        {t("common.export")}
+                      </div>
+                    </Button>
+                  </CSVLink>
                   <Button
                     className="medicals__button"
                     type="submit"
