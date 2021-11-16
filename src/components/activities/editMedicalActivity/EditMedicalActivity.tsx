@@ -6,6 +6,7 @@ import { Redirect, useParams } from "react-router";
 import checkIcon from "../../../assets/check-icon.png";
 import { scrollToElement } from "../../../libraries/uiUtils/scrollToElement";
 import {
+  deleteMedical,
   getMedical,
   updateMedical,
   updateMedicalReset,
@@ -82,6 +83,7 @@ const EditMedicalActivity: FunctionComponent<TProps> = ({
   }, [hasSucceeded]);
 
   const infoBoxRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
     if (hasFailed) {
       scrollToElement(infoBoxRef.current);
@@ -201,7 +203,7 @@ const mapStateToProps = (state: IState): IStateProps => ({
 const mapDispatchToProps: IDispatchProps = {
   getMedical,
   updateMedicalReset,
-  updateMedical,
+  updateMedical
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(EditMedicalActivity);

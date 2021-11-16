@@ -17,7 +17,6 @@ import {
   EDIT_MEDICAL_SUCCESS,
   DELETE_MEDICAL_LOADING,
   DELETE_MEDICAL_FAIL,
-  DELETE_MEDICAL_RESET,
   DELETE_MEDICAL_SUCCESS,
 } from "./consts";
 import { initial } from "./initial";
@@ -118,6 +117,25 @@ export default produce((draft: IMedicalsState, action: IAction<any, any>) => {
     case EDIT_MEDICAL_RESET: {
       draft.editMedical.status = "IDLE";
       delete draft.editMedical.error;
+      break;
+    }
+
+    /**
+     * DELETE_MEDICAL
+     */
+    case DELETE_MEDICAL_LOADING: {
+      draft.deleteMedical.status = "LOADING";
+      break;
+    }
+
+    case DELETE_MEDICAL_SUCCESS: {
+      draft.deleteMedical.status = "SUCCESS";
+      delete draft.editMedical.error;
+      break;
+    }
+
+    case DELETE_MEDICAL_FAIL: {
+      draft.deleteMedical.status = "FAIL";
       break;
     }
   }

@@ -1,5 +1,5 @@
 import Button from "@material-ui/core/Button";
-import {IconButton} from "@material-ui/core";
+import { IconButton } from "@material-ui/core";
 import SplitButton from "../../accessories/splitButton/SplitButton";
 import { useFormik } from "formik";
 import { useHistory } from "react-router";
@@ -29,6 +29,8 @@ import {
   TValues,
   TProps,
   TActivityTransitionState,
+  reportTypes,
+  initialValues,
 } from "./types";
 import isEmpty from "lodash.isempty";
 import iconDelete from "@material-ui/icons/DeleteOutlined";
@@ -39,28 +41,38 @@ import { medicalTypesFormatter } from "../../../libraries/formatUtils/optionForm
 import SmallButton from "../../accessories/smallButton/SmallButton";
 import ConfirmationDialog from "../../accessories/confirmationDialog/ConfirmationDialog";
 import warningIcon from "../../../assets/warning-icon.png";
-import { Delete, Edit, FormatColorResetOutlined, PanoramaSharp } from "@material-ui/icons";
+import {
+  CodeTwoTone,
+  Delete,
+  Edit,
+  FormatColorResetOutlined,
+  PanoramaSharp,
+} from "@material-ui/icons";
 import { info } from "console";
 import { CSVLink } from "react-csv";
 import { CsvDownloadDTO } from "../../../generated/models/CsvDownloadDTO";
+import { AnyObject } from "immer/dist/internal";
 
 const MedicalsActivity: FunctionComponent<TProps> = ({
   userCredentials,
   getMedicals,
   getMedicalTypes,
+  deleteMedical,
   medicalSearchResults,
   searchStatus,
   medicalTypeResults,
   medicalTypeStatus,
   medicalTypesOptions,
+  deleteStatus,
+  isDeleted
 }) => {
   const { t } = useTranslation();
 
   const history = useHistory();
 
-  const redirect = (path:string) => {
-    history.push(path)
-  }
+  const redirect = (path: string) => {
+    history.push(path);
+  };
 
   const breadcrumbMap = {
     [t("nav.dashboard")]: "/",
@@ -68,18 +80,7 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
   };
 
   const resultsRef = useRef<HTMLDivElement>(null);
-
-  const initialValues: TValues = {
-    code: "",
-    prod_code: "",
-    type: "",
-    description: "",
-    initialqty: "",
-    pcsperpck: "",
-    inqty: "",
-    outqty: "",
-    minqty: "",
-  };
+  const infoBoxRef = useRef<HTMLDivElement>(null);
 
   const validationSchema = object({
     //TODO: write schema
@@ -93,25 +94,6 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     },
   });
 
-  const test = [
-    {
-      value: "All",
-      label: "All",
-    },
-    {
-      value: "Surgery",
-      label: "Surgery",
-    },
-    {
-      value: "Chemicals",
-      label: "Chemicals",
-    },
-    {
-      value: "Drugs",
-      label: "Drugs",
-    },
-  ];
-
   const isValid = (fieldName: string): boolean => {
     return has(formik.touched, fieldName) && has(formik.errors, fieldName);
   };
@@ -120,14 +102,19 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     return has(formik.touched, fieldName) ? get(formik.errors, fieldName) : "";
   };
 
-
   const searchValue = (value: MedicalDTO[] | undefined): any[] | undefined => {
-    var filterDesc = formik.getFieldProps("id").value ? formik.getFieldProps("id").value.toLowerCase() : '';
-    var filterType = formik.getFieldProps("type").value ? formik.getFieldProps("type").value : '';
+    var filterDesc = formik.getFieldProps("id").value
+      ? formik.getFieldProps("id").value.toLowerCase()
+      : "";
+    var filterType = formik.getFieldProps("type").value
+      ? formik.getFieldProps("type").value
+      : "";
     let result = value?.filter((element) => {
-      return element.description?.toLowerCase().includes(filterDesc) &&
+      return (
+        element.description?.toLowerCase().includes(filterDesc) &&
         element.type?.description?.includes(filterType)
-    })
+      );
+    });
     return result;
   };
 
@@ -153,12 +140,6 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     formik.setFieldValue("type", selectedType);
   };
 
-  const reportTypes = [
-    "Report of stock",
-    "Report of order",
-    "Report of stock card",
-  ];
-
   useEffect(() => {
     if (searchStatus === "IDLE" && isEmpty(medicalSearchResults))
       getMedicals(GetMedicalsUsingGETSortByEnum.NONE);
@@ -170,10 +151,18 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     renderMedicalTypesResults();
   }, [searchStatus, medicalTypeStatus]);
 
+  useEffect(() => {
+    getMedicals(GetMedicalsUsingGETSortByEnum.NONE);
+    renderSearchResults();
+  }, [isDeleted]);
+
   const [gridApi, setGridApi] = useState(null);
   const [gridColumnApi, setGridColumnApi] = useState<any>(null);
   const [options, setOptions] = useState(medicalTypesOptions);
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
+  const [activityTransitionState, setActivityTransitionState] =
+    useState<TActivityTransitionState>("IDLE");
+  const [medicalToDelete, setMedicalToDelete] = useState(-1);
 
   const onGridReady = (params: any) => {
     setGridApi(params.api);
@@ -189,12 +178,25 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
   };
 
   const handleDelete = (code: number) => {
-    if (onDelete) {onDelete(code)};
+    deleteMedical(code);
     setOpenDeleteConfirmation(false);
   };
 
-  const onDelete = (code: number) => {
-    deleteMedical(code);
+  const handleOpenDeleteConfirmation = (code: number) => {
+    setMedicalToDelete(code);
+    setOpenDeleteConfirmation(true);
+  };
+
+  const renderDeleteMedical = (): JSX.Element | undefined => {
+    switch (deleteStatus) {
+      case "IDLE":
+      case "LOADING":
+        return;
+      case "SUCCESS":
+        return <InfoBox type="warning" message={t("common.deletesuccess")} />;
+      case "FAIL":
+        return <InfoBox type="error" message={t("common.somethingwrong")} />;
+    }
   };
 
   const renderMedicalTypesResults = (): void => {
@@ -231,25 +233,31 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
               frameworkComponents={{
                 iconEditRenderer: (params: any) => (
                   <IconButton
-                  onClick={()=>redirect("/editMedical/" + params.data.code)}
-                >
-                  <Edit />
-                </IconButton>
+                    className="icon-button"
+                    onClick={() => redirect("/editMedical/" + params.data.code)}
+                  >
+                    <Edit />
+                  </IconButton>
                 ),
-                  // IconButton({
-                  //   url: "/editMedical/" + params.data.code,
-                  //   svgImage: iconEdit,
-                  // }),
-                
-                iconDeleteRenderer: () =>(
+                // IconButton({
+                //   url: "/editMedical/" + params.data.code,
+                //   svgImage: iconEdit,
+                // }),
+
+                iconDeleteRenderer: (params: any) => (
                   // IconButton({
                   //   url: "deleteMedical/" + params.data.code,
                   //   svgImage: iconDelete,
                   // }),
-                <IconButton onClick={()=> setOpenDeleteConfirmation(true)}>
-                  <Delete color="secondary" />
-                </IconButton>
-                )
+                  <IconButton
+                    className="icon-button"
+                    onClick={() =>
+                      handleOpenDeleteConfirmation(params.data.code)
+                    }
+                  >
+                    <Delete color="secondary" />
+                  </IconButton>
+                ),
               }}
             >
               <AgGridColumn
@@ -257,14 +265,43 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
                 field="type.description"
               ></AgGridColumn>
               <AgGridColumn headerName="Code" field="prod_code"></AgGridColumn>
-              <AgGridColumn headerName="Description" field="description" sortable={true} filter={true}></AgGridColumn>
-              <AgGridColumn headerName="PcsXPck" field="pcsperpck" maxWidth={100}></AgGridColumn>
-              <AgGridColumn headerName="Stock" field="{{inqty - outqty}}" maxWidth={100}></AgGridColumn>
-              <AgGridColumn headerName="Crit. Level" field="{{(inqty - outqty) <= minqty}}" maxWidth={100}></AgGridColumn>
-              <AgGridColumn headerName="Out of Stock" field="{{(inqty - outqty) == 0}}"  checkboxSelection={true}></AgGridColumn>
-              <AgGridColumn headerName="" cellRenderer="iconEditRenderer" maxWidth={100}></AgGridColumn>
-              <AgGridColumn headerName="" cellRenderer="iconDeleteRenderer" maxWidth={100}></AgGridColumn>
-            </AgGridReact> 
+              <AgGridColumn
+                headerName="Description"
+                field="description"
+                sortable={true}
+                filter={true}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName="PcsXPck"
+                field="pcsperpck"
+                maxWidth={100}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName="Stock"
+                field="{{inqty - outqty}}"
+                maxWidth={100}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName="Crit. Level"
+                field="{{(inqty - outqty) <= minqty}}"
+                maxWidth={100}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName="Out of Stock"
+                field="{{(inqty - outqty) == 0}}"
+                checkboxSelection={true}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName=""
+                cellRenderer="iconEditRenderer"
+                maxWidth={100}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName=""
+                cellRenderer="iconDeleteRenderer"
+                maxWidth={100}
+              ></AgGridColumn>
+            </AgGridReact>
           </div>
         );
 
@@ -276,9 +313,6 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     }
   };
 
-  const [activityTransitionState, setActivityTransitionState] =
-    useState<TActivityTransitionState>("IDLE");
-
   //method to prepare .csv export
   const csvDownload = (props: MedicalDTO[] | undefined): any => {
     if (props) {
@@ -286,21 +320,31 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
       let dataDownload: CsvDownloadDTO[] = [];
       props.forEach((e: MedicalDTO) => {
         obj = {
-          "ID": e.code ? e.code : 0,
-          "Type": e.type?.description,
-          "Code": e.prod_code ? e.prod_code : "",
-          "Description": e.description ? e.description : "",
-          "PcsXPck": e.pcsperpck ? e.pcsperpck : 0,
-          "Stock": e.inqty && e.outqty ? (e.inqty - e.outqty) : 0,
-          "Crit_Level": e.inqty && e.outqty && e.minqty ?  ((e.inqty - e.outqty) <= e.minqty) ? "Yes" : "No" : "",
-          "Out_Of_Stock": e.inqty && e.outqty ? (e.inqty - e.outqty) === 0 ? "Yes" : "No" : ""
-        }
+          ID: e.code ? e.code : 0,
+          Type: e.type?.description,
+          Code: e.prod_code ? e.prod_code : "",
+          Description: e.description ? e.description : "",
+          PcsXPck: e.pcsperpck ? e.pcsperpck : 0,
+          Stock: e.inqty && e.outqty ? e.inqty - e.outqty : 0,
+          Crit_Level:
+            e.inqty && e.outqty && e.minqty
+              ? e.inqty - e.outqty <= e.minqty
+                ? "Yes"
+                : "No"
+              : "",
+          Out_Of_Stock:
+            e.inqty && e.outqty
+              ? e.inqty - e.outqty === 0
+                ? "Yes"
+                : "No"
+              : "",
+        };
         dataDownload.push(obj);
-      })
-      return dataDownload
+      });
+      return dataDownload;
     }
   };
-  
+
   const useDescription = (
     event: React.MouseEvent<Element, MouseEvent>,
     index: number
@@ -412,16 +456,19 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
               </form>
             </div>
           </div>
+          <div ref={infoBoxRef}>
+            {renderDeleteMedical}
+          </div>
           <ConfirmationDialog
             isOpen={openDeleteConfirmation}
             title={t("common.delete")}
             info={t("common.deleteconfirmation", {
-              code: "",
+              code: `${medicalToDelete}`,
             })}
             icon={warningIcon}
             primaryButtonLabel="OK"
             secondaryButtonLabel="Dismiss"
-            handlePrimaryButtonClick={() => handleDelete}
+            handlePrimaryButtonClick={() => handleDelete(medicalToDelete)}
             handleSecondaryButtonClick={() => setOpenDeleteConfirmation(false)}
           />
           <Footer />
@@ -438,6 +485,8 @@ const mapStateToProps = (state: IState): IStateProps => ({
   medicalTypeResults: state.medicaltypes.getMedicalType.data,
   medicalTypesOptions: [],
   deleteStatus: state.medicals.deleteMedical.status || "IDLE",
+  medical: state.medicals.selectedMedical || {},
+  isDeleted: state.medicals.deleteMedical.status == "SUCCESS"
 });
 
 const mapDispatchToProps: IDispatchProps = {
@@ -447,8 +496,3 @@ const mapDispatchToProps: IDispatchProps = {
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(MedicalsActivity);
-function onBlurCallback(
-  arg0: string
-): ((e: any, value: string) => void) | undefined {
-  throw new Error("Function not implemented.");
-}

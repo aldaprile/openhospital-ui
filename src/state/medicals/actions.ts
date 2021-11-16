@@ -29,7 +29,6 @@ import {
   EDIT_MEDICAL_SUCCESS,
   DELETE_MEDICAL_LOADING,
   DELETE_MEDICAL_FAIL,
-  DELETE_MEDICAL_RESET,
   DELETE_MEDICAL_SUCCESS,
 } from "./consts";
 
@@ -125,14 +124,6 @@ export const updateMedical =
       );
   };
 
-  export const deleteMedicalReset =
-  () =>
-  (dispatch: Dispatch<IAction<null, {}>>): void => {
-    dispatch({
-      type: DELETE_MEDICAL_RESET,
-    });
-  };
-
 export const getMedicals =
   (sortBy?: GetMedicalsUsingGETSortByEnum) => //, sorting: GetMedicalsUsingGETSortByEnum
   (dispatch: Dispatch<IAction<MedicalDTO[], {}>>): void => {
@@ -200,42 +191,3 @@ export const getMedicals =
         }
       );
   }
-
-// export const exportMedicalSuccess = (
-//   medical: MedicalDTO
-// ): IAction<MedicalDTO, {}> => {
-//   return {
-//     type: EXPORT_MEDICAL_SUCCESS,
-//     payload: medical,
-//   };
-// };
-
-// export const exportMedical =
-//   (newMedical: MedicalDTO) =>
-//   (dispatch: Dispatch<IAction<null, {}>>): void => {
-//     dispatch({
-//       type: NEW_MEDICAL_LOADING,
-//     });
-
-//     medicalControllerApi.newMedicalUsingPOST({ newMedical }).subscribe( //usingPOST???
-//       () => {
-//         dispatch({
-//           type: NEW_MEDICAL_SUCCESS,
-//         });
-//       },
-//       (error) => {
-//         dispatch({
-//           type: NEW_MEDICAL_FAIL,
-//           error,
-//         });
-//       }
-//     );
-//   };
-
-//   export const exportMedicalReset =
-//   () =>
-//   (dispatch: Dispatch<IAction<null, {}>>): void => {
-//     dispatch({
-//       type: NEW_MEDICAL_RESET,
-//     });
-//   };
