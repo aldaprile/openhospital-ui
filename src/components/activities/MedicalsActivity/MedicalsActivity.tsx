@@ -52,6 +52,8 @@ import { info } from "console";
 import { CSVLink } from "react-csv";
 import { CsvDownloadDTO } from "../../../generated/models/CsvDownloadDTO";
 import { AnyObject } from "immer/dist/internal";
+import EditMedicalActivity from "../editMedicalActivity/EditMedicalActivity";
+import { Link } from "react-router-dom";
 
 const MedicalsActivity: FunctionComponent<TProps> = ({
   userCredentials,
@@ -69,10 +71,6 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
   const { t } = useTranslation();
 
   const history = useHistory();
-
-  const redirect = (path: string) => {
-    history.push(path);
-  };
 
   const breadcrumbMap = {
     [t("nav.dashboard")]: "/",
@@ -238,23 +236,14 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
               paginationAutoPageSize={true}
               frameworkComponents={{
                 iconEditRenderer: (params: any) => (
-                  <IconButton
-                    className="icon-button"
-                    onClick={() => redirect("/editMedical/" + params.data.code)}
+                  <IconButton 
+                    className="icon-button" component={Link} to={"/editMedical" + params.data.code}
                   >
-                    <Edit />
+                      <Edit /> 
                   </IconButton>
                 ),
-                // IconButton({
-                //   url: "/editMedical/" + params.data.code,
-                //   svgImage: iconEdit,
-                // }),
 
                 iconDeleteRenderer: (params: any) => (
-                  // IconButton({
-                  //   url: "deleteMedical/" + params.data.code,
-                  //   svgImage: iconDelete,
-                  // }),
                   <IconButton
                     className="icon-button"
                     onClick={() =>
