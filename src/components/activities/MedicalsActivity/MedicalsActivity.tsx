@@ -155,6 +155,12 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     getMedicals(GetMedicalsUsingGETSortByEnum.NONE);
     renderSearchResults();
   }, [isDeleted]);
+  
+  useEffect(() => {
+    if (isDeleted) {
+      scrollToElement(infoBoxRef.current);
+    }
+  }, [isDeleted]);
 
   const [gridApi, setGridApi] = useState(null);
   const [gridColumnApi, setGridColumnApi] = useState<any>(null);
@@ -187,15 +193,15 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     setOpenDeleteConfirmation(true);
   };
 
-  const renderDeleteMedical = (): JSX.Element | undefined => {
+  const renderDeleteMedical = (code: number): JSX.Element | undefined => {
     switch (deleteStatus) {
       case "IDLE":
       case "LOADING":
         return;
       case "SUCCESS":
-        return <InfoBox type="warning" message={t("common.deletesuccess")} />;
+        return (<InfoBox type="warning" message={t("common.deletesuccess", { code: `${medicalToDelete}`})} />);
       case "FAIL":
-        return <InfoBox type="error" message={t("common.somethingwrong")} />;
+        return (<InfoBox type="error" message={t("common.somethingwrong")} />);
     }
   };
 
@@ -306,10 +312,10 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
         );
 
       case "SUCCESS_EMPTY":
-        return <InfoBox type="warning" message={t("common.searchnotfound")} />;
+        return (<InfoBox type="warning" message={t("common.searchnotfound")}/>);
 
       default:
-        return <InfoBox type="error" message={t("common.somethingwrong")} />;
+        return (<InfoBox type="error" message={t("common.somethingwrong")} />);
     }
   };
 
@@ -457,7 +463,7 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
             </div>
           </div>
           <div ref={infoBoxRef}>
-            {renderDeleteMedical}
+            {renderDeleteMedical(medicalToDelete)}
           </div>
           <ConfirmationDialog
             isOpen={openDeleteConfirmation}
@@ -486,7 +492,7 @@ const mapStateToProps = (state: IState): IStateProps => ({
   medicalTypesOptions: [],
   deleteStatus: state.medicals.deleteMedical.status || "IDLE",
   medical: state.medicals.selectedMedical || {},
-  isDeleted: state.medicals.deleteMedical.status == "SUCCESS"
+  isDeleted: state.medicals.deleteMedical.status === "SUCCESS",
 });
 
 const mapDispatchToProps: IDispatchProps = {
