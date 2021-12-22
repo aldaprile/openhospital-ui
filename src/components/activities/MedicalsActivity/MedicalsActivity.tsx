@@ -11,15 +11,19 @@ import { Button } from "@material-ui/core";
 import iconDelete from "@material-ui/icons/DeleteOutlined";
 import iconEdit from "@material-ui/icons/EditOutlined";
 import SearchIcon from "@material-ui/icons/Search";
-import { AgGridColumn, AgGridReact } from "ag-grid-react";
-import "ag-grid-community/dist/styles/ag-grid.css";
-import "ag-grid-community/dist/ag-grid-community";
+// import { AgGridColumn, AgGridReact } from "ag-grid-react";
+// import "ag-grid-community/dist/styles/ag-grid.css";
+// import "ag-grid-community/dist/ag-grid-community";
 import { IState } from "../../../types";
 import { GetMedicalsUsingGETSortByEnum, MedicalDTO } from "../../../generated";
 import "./styles.scss";
 import { scrollToElement } from "../../../libraries/uiUtils/scrollToElement";
 import { medicalTypesFormatter } from "../../../libraries/formatUtils/optionFormatting";
-import { deleteMedical, getMedicals, filterMedicals } from "../../../state/medicals/actions";
+import {
+  deleteMedical,
+  getMedicals,
+  filterMedicals,
+} from "../../../state/medicals/actions";
 import { getMedicalTypes } from "../../../state/medicaltypes/actions";
 import AppHeader from "../../accessories/appHeader/AppHeader";
 import Footer from "../../accessories/footer/Footer";
@@ -28,11 +32,29 @@ import TextField from "../../accessories/textField/TextField";
 import SelectField from "../../accessories/selectField/SelectField";
 import SmallButton from "../../accessories/smallButton/SmallButton";
 import { CsvDownloadDTO } from "../../../generated/models/CsvDownloadDTO";
-import IconButton from "../../accessories/iconButton/IconButton"
+import IconButton from "../../accessories/iconButton/IconButton";
 import ConfirmationDialog from "../../accessories/confirmationDialog/ConfirmationDialog";
 import SplitButton from "../../accessories/splitButton/SplitButton";
 import warningIcon from "../../../assets/warning-icon.png";
-import { IDispatchProps, IStateProps, TProps, TActivityTransitionState, TValues } from "./types";
+import {
+  IDispatchProps,
+  IStateProps,
+  TProps,
+  TActivityTransitionState,
+  TValues,
+} from "./types";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableFooter,
+  TablePagination,
+} from "@material-ui/core";
+import Paper from "@material-ui/core/Paper";
+import Checkbox from "@material-ui/core/Checkbox";
 
 const MedicalsActivity: FunctionComponent<TProps> = ({
   userCredentials,
@@ -42,10 +64,10 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
   searchStatus,
   medicalTypeResults,
   medicalTypeStatus,
-  medicalTypesOptions,  
-  deleteMedical,  
+  medicalTypesOptions,
+  deleteMedical,
   deleteStatus,
-  isDeleted
+  isDeleted,
 }) => {
   const { t } = useTranslation();
 
@@ -58,12 +80,22 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
 
   const infoBoxRef = useRef<HTMLDivElement>(null);
 
-  const initialValues : TValues = {critical: undefined, desc: undefined, nameSorted: undefined, type: undefined  }
+  const initialValues: TValues = {
+    critical: undefined,
+    desc: undefined,
+    nameSorted: undefined,
+    type: undefined,
+  };
 
   const formik = useFormik({
     initialValues,
     onSubmit: (values: any) => {
-      filterMedicals(values.critical, values.desc, values.nameSorted, values.type);
+      filterMedicals(
+        values.critical,
+        values.desc,
+        values.nameSorted,
+        values.type
+      );
     },
   });
 
@@ -81,14 +113,21 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     return has(formik.touched, fieldName) ? get(formik.errors, fieldName) : "";
   };
 
-
-  const searchValue = (value: MedicalDTO[] | undefined): any[] | undefined => {
-    var filterDesc = formik.getFieldProps("id").value ? formik.getFieldProps("id").value.toLowerCase() : '';
-    var filterType = formik.getFieldProps("type").value ? formik.getFieldProps("type").value : '';
+  const searchValue = (
+    value: MedicalDTO[] | undefined
+  ): MedicalDTO[] | undefined => {
+    var filterDesc = formik.getFieldProps("id").value
+      ? formik.getFieldProps("id").value.toLowerCase()
+      : "";
+    var filterType = formik.getFieldProps("type").value
+      ? formik.getFieldProps("type").value
+      : "";
     let result = value?.filter((element) => {
-      return element.description?.toLowerCase().includes(filterDesc) &&
+      return (
+        element.description?.toLowerCase().includes(filterDesc) &&
         element.type?.description?.includes(filterType)
-    })
+      );
+    });
     return result;
   };
 
@@ -160,9 +199,14 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
       case "LOADING":
         return;
       case "SUCCESS":
-        return (<InfoBox type="warning" message={t("common.deletesuccess", { code: `${medicalToDelete}`})} />);
+        return (
+          <InfoBox
+            type="warning"
+            message={t("common.deletesuccess", { code: `${medicalToDelete}` })}
+          />
+        );
       case "FAIL":
-        return (<InfoBox type="error" message={t("common.somethingwrong")} />);
+        return <InfoBox type="error" message={t("common.somethingwrong")} />;
     }
   };
 
@@ -201,7 +245,7 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
       case "SUCCESS":
         return (
           <div className="medicalsGrid_main">
-            <AgGridReact
+            {/* <AgGridReact
               onGridReady={onGridReady}
               onFirstDataRendered={() => autoSizeAll(false)}
               defaultColDef={{ resizable: true }}
@@ -211,21 +255,19 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
               paginationAutoPageSize={true}
               frameworkComponents={{
                 iconEditRenderer: (params: any) => (
-                  <IconButton 
-                  svgImage={iconEdit}
+                  <IconButton
+                    svgImage={iconEdit}
                     url={"/editMedical/" + params.data.code}
-                  >
-                  </IconButton>
+                  ></IconButton>
                 ),
 
                 iconDeleteRenderer: (params: any) => (
                   <IconButton
-                  svgImage={iconDelete}
+                    svgImage={iconDelete}
                     onClick={() =>
                       handleOpenDeleteConfirmation(params.data.code)
                     }
-                  >
-                  </IconButton>
+                  ></IconButton>
                 ),
               }}
             >
@@ -234,14 +276,123 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
                 field="type.description"
               ></AgGridColumn>
               <AgGridColumn headerName="Code" field="prod_code"></AgGridColumn>
-              <AgGridColumn headerName="Description" field="description" sortable={true} filter={true}></AgGridColumn>
-              <AgGridColumn headerName="PcsXPck" field="pcsperpck" maxWidth={100}></AgGridColumn>
-              <AgGridColumn headerName="Stock" field="{{inqty - outqty}}" maxWidth={100}></AgGridColumn>
-              <AgGridColumn headerName="Crit. Level" field="{{(inqty - outqty) <= minqty}}" maxWidth={100}></AgGridColumn>
-              <AgGridColumn headerName="Out of Stock" field="{{(inqty - outqty) == 0}}"  checkboxSelection={true}></AgGridColumn>
-              <AgGridColumn headerName="" cellRenderer="iconEditRenderer" maxWidth={100}></AgGridColumn>
-              <AgGridColumn headerName="" cellRenderer="iconDeleteRenderer" maxWidth={100}></AgGridColumn>
-            </AgGridReact> 
+              <AgGridColumn
+                headerName="Description"
+                field="description"
+                sortable={true}
+                filter={true}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName="PcsXPck"
+                field="pcsperpck"
+                maxWidth={100}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName="Stock"
+                field="{{inqty - outqty}}"
+                maxWidth={100}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName="Crit. Level"
+                field="{{(inqty - outqty) <= minqty}}"
+                maxWidth={100}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName="Out of Stock"
+                field="{{(inqty - outqty) == 0}}"
+                checkboxSelection={true}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName=""
+                cellRenderer="iconEditRenderer"
+                maxWidth={100}
+              ></AgGridColumn>
+              <AgGridColumn
+                headerName=""
+                cellRenderer="iconDeleteRenderer"
+                maxWidth={100}
+              ></AgGridColumn>
+            </AgGridReact> */}
+            <Paper>
+              <TableContainer>
+                <Table aria-label="simple table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Code</TableCell>
+                      <TableCell align="right">Description</TableCell>
+                      <TableCell align="right">PcsXPck</TableCell>
+                      <TableCell align="right">Stock</TableCell>
+                      <TableCell align="right">Crit. Level</TableCell>
+                      <TableCell align="right">Out of Stock</TableCell>
+                      <TableCell align="right"></TableCell>
+                      <TableCell align="right"></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {searchValue(medicalSearchResults)?.map((row) => (
+                      <TableRow key={row?.code}>
+                        <TableCell component="th" scope="row">
+                          {row.prod_code}
+                        </TableCell>
+                        <TableCell align="right">{row.description}</TableCell>
+                        <TableCell align="right">{row.pcsperpck}</TableCell>
+                        <TableCell align="right">
+                          {row.inqty && row.outqty ? row.inqty - row.outqty : 0}
+                        </TableCell>
+                        <TableCell align="right">
+                          {row.inqty && row.outqty && row.minqty
+                            ? row.inqty - row.outqty <= row.minqty
+                            : 0}
+                        </TableCell>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={
+                              row.inqty && row.outqty
+                                ? row.inqty - row.outqty === 0
+                                  ? true
+                                  : false
+                                : false
+                            }
+                            inputProps={{ "aria-label": "Out of Stock" }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            svgImage={iconEdit}
+                            url={"/editMedical/" + row.code}
+                          ></IconButton>
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            svgImage={iconDelete}
+                            onClick={() =>
+                              handleOpenDeleteConfirmation(
+                                row.code ? row.code : 0
+                              )
+                            }
+                          ></IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                  <TableFooter>
+                    {searchValue(medicalSearchResults) ? (
+                      <TablePagination
+                        rowsPerPageOptions={[10, 25, 100]}
+                        component="div"
+                        count={rows.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                      />
+                    ) : (
+                      ""
+                    )}
+                  </TableFooter>
+                </Table>
+              </TableContainer>
+            </Paper>
           </div>
         );
 
@@ -253,8 +404,8 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     }
   };
 
-  const searchText = '';
-  
+  const searchText = "";
+
   //method to prepare .csv export
   const csvDownload = (props: MedicalDTO[] | undefined): any => {
     if (props) {
@@ -262,21 +413,31 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
       let dataDownload: CsvDownloadDTO[] = [];
       props.forEach((e: MedicalDTO) => {
         obj = {
-          "ID": e.code ? e.code : 0,
-          "Type": e.type?.description,
-          "Code": e.prod_code ? e.prod_code : "",
-          "Description": e.description ? e.description : "",
-          "PcsXPck": e.pcsperpck ? e.pcsperpck : 0,
-          "Stock": e.inqty && e.outqty ? (e.inqty - e.outqty) : 0,
-          "Crit_Level": e.inqty && e.outqty && e.minqty ?  ((e.inqty - e.outqty) <= e.minqty) ? "Yes" : "No" : "",
-          "Out_Of_Stock": e.inqty && e.outqty ? (e.inqty - e.outqty) === 0 ? "Yes" : "No" : ""
-        }
+          ID: e.code ? e.code : 0,
+          Type: e.type?.description,
+          Code: e.prod_code ? e.prod_code : "",
+          Description: e.description ? e.description : "",
+          PcsXPck: e.pcsperpck ? e.pcsperpck : 0,
+          Stock: e.inqty && e.outqty ? e.inqty - e.outqty : 0,
+          Crit_Level:
+            e.inqty && e.outqty && e.minqty
+              ? e.inqty - e.outqty <= e.minqty
+                ? "Yes"
+                : "No"
+              : "",
+          Out_Of_Stock:
+            e.inqty && e.outqty
+              ? e.inqty - e.outqty === 0
+                ? "Yes"
+                : "No"
+              : "",
+        };
         dataDownload.push(obj);
-      })
-      return dataDownload
+      });
+      return dataDownload;
     }
   };
-  
+
   const useDescription = (
     event: React.MouseEvent<Element, MouseEvent>,
     index: number
@@ -386,10 +547,8 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
                 {renderSearchResults()}
               </form>
             </div>
-          </div>          
-          <div ref={infoBoxRef}>
-            {renderDeleteMedical(medicalToDelete)}
           </div>
+          <div ref={infoBoxRef}>{renderDeleteMedical(medicalToDelete)}</div>
           <ConfirmationDialog
             isOpen={openDeleteConfirmation}
             title={t("common.delete")}
@@ -421,9 +580,8 @@ const mapStateToProps = (state: IState): IStateProps => ({
 
 const mapDispatchToProps: IDispatchProps = {
   getMedicals,
-  getMedicalTypes, 
+  getMedicalTypes,
   deleteMedical,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(MedicalsActivity);
-
