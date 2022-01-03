@@ -233,6 +233,11 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
         setOptions(medicalTypesOptions);
     }
   };
+  const [page, setPage] = React.useState(0);
+
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
 
   const renderSearchResults = (): JSX.Element | undefined => {
     switch (searchStatus) {
@@ -378,15 +383,23 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
                   <TableFooter>
                     {searchValue(medicalSearchResults) ? (
                       <TablePagination
-                        rowsPerPageOptions={[10, 25, 100]}
                         component="div"
-                        count={rows.length}
-                        rowsPerPage={rowsPerPage}
+                        count={searchValue(medicalSearchResults)?.length || 0}
+                        rowsPerPage={10}
+                        rowsPerPageOptions={[10, 25, 100]}
                         page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
+                        onChangePage={handleChangePage}
                       />
                     ) : (
+                      // <TablePagination
+                      //   rowsPerPageOptions={[10, 25, 100]}
+                      //   component="div"
+                      //   count={rows.length}
+                      //   rowsPerPage={rowsPerPage}
+                      //   page={page}
+                      //   onPageChange={handleChangePage}
+                      //   onRowsPerPageChange={handleChangeRowsPerPage}
+                      // />
                       ""
                     )}
                   </TableFooter>
