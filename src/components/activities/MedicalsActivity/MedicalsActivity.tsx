@@ -11,9 +11,6 @@ import { Button } from "@material-ui/core";
 import iconDelete from "@material-ui/icons/DeleteOutlined";
 import iconEdit from "@material-ui/icons/EditOutlined";
 import SearchIcon from "@material-ui/icons/Search";
-// import { AgGridColumn, AgGridReact } from "ag-grid-react";
-// import "ag-grid-community/dist/styles/ag-grid.css";
-// import "ag-grid-community/dist/ag-grid-community";
 import { IState } from "../../../types";
 import { GetMedicalsUsingGETSortByEnum, MedicalDTO } from "../../../generated";
 import "./styles.scss";
@@ -30,7 +27,6 @@ import Footer from "../../accessories/footer/Footer";
 import InfoBox from "../../accessories/infoBox/InfoBox";
 import TextField from "../../accessories/textField/TextField";
 import SelectField from "../../accessories/selectField/SelectField";
-import SmallButton from "../../accessories/smallButton/SmallButton";
 import { CsvDownloadDTO } from "../../../generated/models/CsvDownloadDTO";
 import IconButton from "../../accessories/iconButton/IconButton";
 import ConfirmationDialog from "../../accessories/confirmationDialog/ConfirmationDialog";
@@ -100,9 +96,9 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
   });
 
   const reportTypes = [
-    "Report of stock",
-    "Report of order",
-    "Report of stock card",
+    t("medical.stockreport"),
+    t("medical.orderreport"),
+    t("medical.cardreport"),
   ];
 
   const isValid = (fieldName: string): boolean => {
@@ -153,8 +149,6 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
     formik.setFieldValue("type", selectedType);
   };
 
-  const [, setGridApi] = useState(null);
-  const [gridColumnApi, setGridColumnApi] = useState<any>(null);
   const [options, setOptions] = useState(medicalTypesOptions);
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
   const [activityTransitionState, setActivityTransitionState] =
@@ -199,28 +193,19 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
       case "LOADING":
         return;
       case "SUCCESS":
-        return (
-          <InfoBox
-            type="warning"
-            message={t("common.deletesuccess", { code: `${medicalToDelete}` })}
-          />
-        );
+        if (medicalToDelete > 0)
+          return (
+            <InfoBox
+              type="warning"
+              message={t("common.deletesuccess", {
+                code: `${medicalToDelete}`,
+              })}
+            />
+          );
+        else return;
       case "FAIL":
         return <InfoBox type="error" message={t("common.somethingwrong")} />;
     }
-  };
-
-  const onGridReady = (params: any) => {
-    setGridApi(params.api);
-    setGridColumnApi(params.columnApi);
-  };
-
-  const autoSizeAll = (skipHeader: boolean) => {
-    var allColumnIds: any = [];
-    gridColumnApi?.getAllColumns().forEach(function (column: any) {
-      allColumnIds.push(column.colId);
-    });
-    gridColumnApi?.autoSizeColumns(allColumnIds, skipHeader);
   };
 
   const renderMedicalTypesResults = (): void => {
@@ -250,74 +235,6 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
       case "SUCCESS":
         return (
           <div className="medicalsGrid_main">
-            {/* <AgGridReact
-              onGridReady={onGridReady}
-              onFirstDataRendered={() => autoSizeAll(false)}
-              defaultColDef={{ resizable: true }}
-              rowData={searchValue(medicalSearchResults)}
-              rowHeight={40}
-              pagination={true}
-              paginationAutoPageSize={true}
-              frameworkComponents={{
-                iconEditRenderer: (params: any) => (
-                  <IconButton
-                    svgImage={iconEdit}
-                    url={"/editMedical/" + params.data.code}
-                  ></IconButton>
-                ),
-
-                iconDeleteRenderer: (params: any) => (
-                  <IconButton
-                    svgImage={iconDelete}
-                    onClick={() =>
-                      handleOpenDeleteConfirmation(params.data.code)
-                    }
-                  ></IconButton>
-                ),
-              }}
-            >
-              <AgGridColumn
-                headerName="Type"
-                field="type.description"
-              ></AgGridColumn>
-              <AgGridColumn headerName="Code" field="prod_code"></AgGridColumn>
-              <AgGridColumn
-                headerName="Description"
-                field="description"
-                sortable={true}
-                filter={true}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName="PcsXPck"
-                field="pcsperpck"
-                maxWidth={100}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName="Stock"
-                field="{{inqty - outqty}}"
-                maxWidth={100}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName="Crit. Level"
-                field="{{(inqty - outqty) <= minqty}}"
-                maxWidth={100}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName="Out of Stock"
-                field="{{(inqty - outqty) == 0}}"
-                checkboxSelection={true}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName=""
-                cellRenderer="iconEditRenderer"
-                maxWidth={100}
-              ></AgGridColumn>
-              <AgGridColumn
-                headerName=""
-                cellRenderer="iconDeleteRenderer"
-                maxWidth={100}
-              ></AgGridColumn>
-            </AgGridReact> */}
             <Paper>
               <TableContainer>
                 <Table aria-label="simple table">
@@ -391,15 +308,6 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
                         onChangePage={handleChangePage}
                       />
                     ) : (
-                      // <TablePagination
-                      //   rowsPerPageOptions={[10, 25, 100]}
-                      //   component="div"
-                      //   count={rows.length}
-                      //   rowsPerPage={rowsPerPage}
-                      //   page={page}
-                      //   onPageChange={handleChangePage}
-                      //   onRowsPerPageChange={handleChangeRowsPerPage}
-                      // />
                       ""
                     )}
                   </TableFooter>
@@ -550,9 +458,9 @@ const MedicalsActivity: FunctionComponent<TProps> = ({
                         onBlur={formik.handleBlur}
                       />
                       <div className="search__button">
-                        <SmallButton type="submit">
+                        <Button type="submit">
                           <SearchIcon fontSize="large" />
-                        </SmallButton>
+                        </Button>
                       </div>
                     </div>
                   </div>
